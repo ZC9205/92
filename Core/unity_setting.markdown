@@ -26,7 +26,7 @@ iOS平台可以使用<font color=#FF0000>Application.targetFrameRate</font>来�
 #### Don't Sync
 不设置垂直同步，实际帧率通过Application.targetFrameRate来指定
 
-#### Evert V Blank
+#### Every V Blank
 帧率为60，Application.targetFrameRate无效
 
 #### Every Second V Blank
