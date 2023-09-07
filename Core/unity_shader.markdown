@@ -176,8 +176,7 @@ void CSMain (uint3 id : SV_DispatchThreadID, uint3 gid : SV_GroupID, uint pid : 
 ```
 
 #### 声明核函数
-![Alt text](assets/unity_shader/image-6.png)
-
+![Alt text](assets/unity_shader/image-6.png)<br/>
 声明一个名为"CSMain"的核函数<br/>
 只有声明后该函数才会被GPU执行<br/>
 一个CS文件内至少需要<font color=#FF0000>一个</font>核函数
@@ -188,8 +187,7 @@ void CSMain (uint3 id : SV_DispatchThreadID, uint3 gid : SV_GroupID, uint pid : 
 这个参数通过外部（csharp脚本）赋值，并在CSMain函数内进行计算<br/>
 
 #### 声明线程分配
-![Alt text](assets/unity_shader/image-8.png)
-
+![Alt text](assets/unity_shader/image-8.png)<br/>
 单一线程组内的线程分配
 
 #### 核函数逻辑
@@ -253,8 +251,7 @@ void CSMain (uint3 groupId : SV_GroupID, uint groupIndex : SV_GroupIndex)
 ```
 
 #### 声明传入传出参数
-![Alt text](assets/unity_shader/image-10.png)
-
+![Alt text](assets/unity_shader/image-10.png)<br/>
 声明2个参数 InputBuffer作为输入 OutputBuffer作为输出<br/>
 这两个都是包含int类型的数组(也可以自定义struct类型)
 #### 核函数逻辑
@@ -287,11 +284,12 @@ public class ComputedScript1 : MonoBehaviour
         {
             Debug.Log(arr[i]);
         }
+        inputData.Release();
+        outputData.Release();
     }
 }
 ```
-![Alt text](assets/unity_shader/image-18.png)
-
+![Alt text](assets/unity_shader/image-18.png)<br/>
 创建需要计算的数组
 ![Alt text](assets/unity_shader/image-13.png)
 根据数组长度，创建输入输出的ComputeBuffer。第一个参数是数组长度，第二个是组内单个元素的字节占用。这边单个元素是int类型，也就是4字节<br/>
@@ -300,7 +298,8 @@ public class ComputedScript1 : MonoBehaviour
 ![Alt text](assets/unity_shader/image-19.png)
 设置ComputeShader内的输入输出参数，然后执行函数
 ![Alt text](assets/unity_shader/image-20.png)
-
-获取ComputeShader计算后的输出参数，将结果存在数组中，打印输出
 ![Alt text](assets/unity_shader/image-21.png)
 ![Alt text](assets/unity_shader/image-22.png)
+获取ComputeShader计算后的输出参数，将结果存在数组中，打印输出
+![Alt text](assets/unity_shader/image-23.png)<br/>
+最后记得释放不需要的ComputeBuffer
