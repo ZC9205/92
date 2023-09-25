@@ -21,6 +21,9 @@
     - [多Job依赖执行](#多job依赖执行)
       - [依赖执行](#依赖执行)
     - [Job For](#job-for)
+  - [Burst编译器 + JobSystem](#burst编译器--jobsystem)
+    - [安装设置](#安装设置)
+    - [使用](#使用-1)
 
 
 # Unity Game（Unity开发）
@@ -106,8 +109,9 @@ void Start()
 ## Job System
 
 ### 说明
-Unity提供的多线程技术，可以将任务分给多个线程并行执行，以此提高运行效率</br>
-[Unity学习—JobSystem](https://zhuanlan.zhihu.com/p/148160780)
+Unity提供的多线程技术，是Unity Dots(多线程运行框架)的核心组件之一，可以将任务分给多个线程并行执行，以此提高运行效率</br>
+[Unity学习—JobSystem](https://zhuanlan.zhihu.com/p/148160780)<br/>
+[什么是C# Job System？](https://developer.unity.cn/projects/61f68b70edbc2a16f7df9e83)
 
 ### 声明Job结构
 一个Job代表一个可执行的任务</br>
@@ -134,7 +138,7 @@ Job内的成员仅支持blittable及NativeContainer类型
 1.byte, sbyte, short, ushort, int, uint, long, ulong, single, double</br>
 2.blittable类型的一维数组,如:int[]</br>
 ##### NativeContainer
-一种托管值类型。包含指向非托管分配的指针。当与JobSystem一起使用时，NativeContainer允许Job访问与主线程共享的数据，而非数据副本
+一种托管值类型。里面包含了指向Native内存的指针，非c#托管内存。当与JobSystem一起使用时，NativeContainer允许Job访问与主线程共享的数据，而非数据副本
 ##### Execute()
 该任务的具体执行函数，继承IJob接口后必须实现
 ### 执行Job
@@ -153,7 +157,7 @@ var jobPlus = new JobPlus
 ##### NativeArray
 NativeContainer的一种</br>
 参数1是数组长度</br>
-参数2是分配类型(根据Job的执行时长决定)</br>
+参数2是存在时长</br>
 #### 开始执行
 ```c#
 var handlePlus = jobPlus.Schedule();
@@ -235,9 +239,8 @@ private void JobParallel()
     };
     //运行在主线程(参数为Execute总执行次数)
     job.Run(position.Length);
-    JobHandle scheduleJobDependency = new JobHandle();
     //运行在单个工作线程(参数1为Execute总执行次数 参数2为需要等待的依赖任务)
-    JobHandle scheduleJobHandle = job.Schedule(position.Length, scheduleJobDependency);
+    JobHandle scheduleJobHandle = job.Schedule(position.Length, default);
     //并行在多个工作线程(参数1为Execute总执行次数 参数2为单批次执行次数 参数3为需要等待的依赖任务)
     JobHandle scheduleParallelJobHandle = job.ScheduleParallel(position.Length, 64, scheduleJobHandle);
     //等待并行任务结束
@@ -249,3 +252,64 @@ private void JobParallel()
     velocity.Dispose();
 }
 ```
+
+## Burst编译器 + JobSystem
+Unity提供的一款编译器，可以将c#代码直接编译为对应的机器码以提升运行效率。配合JobSystem使用
+### 安装设置
+![](assets/unity_game/image.png)</br>
+在Package Manager中找到Burst包，进行安装
+### 使用
+执行代码
+```
+private void JobParallelTimeCost()
+{
+    //声明原生数组position
+    var position = new NativeArray<Vector3>(500000, Allocator.Persistent);
+
+    //声明原生数组velocity
+    var velocity = new NativeArray<Vector3>(500000, Allocator.Persistent);
+    for (int i = 0; i < velocity.Length; i++)
+    {
+        velocity[i] = new Vector3(0, 10, 0);
+    }
+    
+    var job = new VelocityJob()
+    {
+        deltaTime = Time.deltaTime,
+        position = position,
+        velocity = velocity,
+    };
+
+    var startTime = Time.realtimeSinceStartup;
+    
+    JobHandle scheduleJobHandle = job.Schedule(position.Length, default);
+    scheduleJobHandle.Complete();
+    
+    Debug.Log($"time:{Time.realtimeSinceStartup - startTime}");
+
+    position.Dispose();
+    velocity.Dispose();
+}
+```
+不使用Burst，运行时间约为80ms-90ms
+![Alt text](assets/unity_game/image-1.png)
+
+```
+[BurstCompile]
+public struct VelocityJob : IJobFor
+{
+    //不需要写入的可以标记为只读数据，优化效率
+    [ReadOnly]
+    public NativeArray<Vector3> velocity;
+    public NativeArray<Vector3> position;
+    public float deltaTime;
+
+    public void Execute(int i)
+    {
+        position[i] = position[i] + velocity[i] * deltaTime;
+    }
+}
+```
+添加Burst，只需要在继承IJob的结构体或对应方法加上标签[BurstCompile]
+再次执行程序，运行时间约为9s-10ms，快了近10倍
+![Alt text](assets/unity_game/image-2.png)
