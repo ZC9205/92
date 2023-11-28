@@ -1,4 +1,102 @@
+- [Unity Shader（着色器）](#unity-shader着色器)
+  - [预处理器指令](#预处理器指令)
+    - [pragma](#pragma)
+  - [着色器变体](#着色器变体)
+    - [使用场景](#使用场景)
+    - [创建变体（关键字声明）](#创建变体关键字声明)
+      - [#pragma multi\_compile](#pragma-multi_compile)
+      - [#pragma multi\_compile\_local](#pragma-multi_compile_local)
+      - [#pragma shader\_feature](#pragma-shader_feature)
+      - [#pragma shader\_feature\_local](#pragma-shader_feature_local)
+    - [启用变体](#启用变体)
+      - [Shader.EnableKeyword](#shaderenablekeyword)
+      - [Shader.DisableKeyword](#shaderdisablekeyword)
+      - [Material.EnableKeyword](#materialenablekeyword)
+      - [Material.DisableKeyword](#materialdisablekeyword)
+  - [Stencil Buff（模板缓冲）](#stencil-buff模板缓冲)
+    - [渲染阶段](#渲染阶段)
+    - [属性值](#属性值)
+      - [Ref（对比值）](#ref对比值)
+      - [Comp (对比方法)](#comp-对比方法)
+      - [Pass (通过模板测试后的操作)](#pass-通过模板测试后的操作)
+      - [Fail (未通过模板测试后的操作)](#fail-未通过模板测试后的操作)
+      - [ZFail (通过模板测试但未通过深度测试后的操作)](#zfail-通过模板测试但未通过深度测试后的操作)
+      - [ReadMask (读取掩码)](#readmask-读取掩码)
+      - [WriteMask (写入掩码)](#writemask-写入掩码)
+  - [Compute Shader(计算着色器)](#compute-shader计算着色器)
+    - [Thread Group \& Thread(线程组与线程)](#thread-group--thread线程组与线程)
+      - [Thread Group（线程组）](#thread-group线程组)
+      - [Thread（线程）](#thread线程)
+      - [SV\_GroupID : uint3（线程组id）](#sv_groupid--uint3线程组id)
+      - [SV\_GroupThreadID : uint3（线程组内线程id）](#sv_groupthreadid--uint3线程组内线程id)
+      - [SV\_DispatchThreadID : uint3（所有线程组范围的线程id）](#sv_dispatchthreadid--uint3所有线程组范围的线程id)
+      - [SV\_GroupIndex : uint（线程组内线程的下标）](#sv_groupindex--uint线程组内线程的下标)
+    - [Compute Shader纹理渲染](#compute-shader纹理渲染)
+      - [声明核函数](#声明核函数)
+      - [声明传入参数](#声明传入参数)
+      - [声明线程分配](#声明线程分配)
+      - [核函数逻辑](#核函数逻辑)
+      - [外部脚本逻辑](#外部脚本逻辑)
+    - [Compute Shader GPU计算](#compute-shader-gpu计算)
+      - [声明传入传出参数](#声明传入传出参数)
+      - [核函数逻辑](#核函数逻辑-1)
+      - [外部脚本逻辑](#外部脚本逻辑-1)
+
+
 # Unity Shader（着色器）
+
+
+## 预处理器指令
+### pragma 
+pragma是一种预处理器指令，将其放置在Shader语言的代码块内（如:CGPROGRAM..ENDCG）使用。常见的有
+pragma vertex name 声明顶点着色器名称
+pragma fragment name 声明片元着色器名称
+
+## 着色器变体
+在一份着色器文件内声明关键词，Unity会根据关键词的数量生成对应数量的着色器变体
+
+### 使用场景
+很多时候，同一份着色器代码主体可以作用在很多地方但细节部分需要调整
+在gpu内使用if..else会有一定量消耗
+复制多份着色器文件来进行切换不利于维护（一旦主体需要修改，就得同时修改多份文件）
+这时候可以使用着色器变体来进行替代
+
+### 创建变体（关键字声明）
+#### #pragma multi_compile
+声明全局关键字。可以一次声明多个，每声明一个就会产生一个shader变体
+由于Unity的全局关键字有上限（目前是384，并且有部分Unity自己使用了），不建议声明过多
+和shader_feature不同，声明的变体不论有没有使用到都会包含在构建包内
+例：
+![Alt text](assets/unity_shader/image-24.png)
+![Alt text](assets/unity_shader/image-25.png)
+以上声明会产生3个变体
+默认变体 不包含A、B部分
+A变体 包含默认和A部分
+B变体 包含默认和B部分
+#### #pragma multi_compile_local 
+声明本地关键字。和multi_compile的区别是，通过multi_compile_local声明的关键字占用的是该shader的本地关键字计数
+#### #pragma shader_feature
+和multi_compile一样声明全局关键字。区别在于shader_feature声明后但没用到的关键字会从构建包内剔除
+例：
+![Alt text](assets/unity_shader/image-26.png)
+![Alt text](assets/unity_shader/image-27.png)
+声明了关键字D、E，但实际只使用了D，因此关键字E在打包时会被剔除。如果在代码内启用E会发现命令失效
+#### #pragma shader_feature_local
+声明本地关键字。和shader_feature的区别是，通过shader_feature声明的关键字占用的是该shader的本地关键字计数
+
+### 启用变体
+#### Shader.EnableKeyword
+![Alt text](assets/unity_shader/image-28.png)
+启用全局关键字变体。开启后游戏内使用该关键字的着色器都会被切换为该变体。只对声明为全局的关键字有效（同时启用全局关键字和局部关键字时，最终作用的是局部关键字？）
+#### Shader.DisableKeyword
+![Alt text](assets/unity_shader/image-29.png)
+关闭全局关键字变体。关闭后游戏内使用该关键字的着色器都会被切换为默认变体。只对声明为全局的关键字有效
+#### Material.EnableKeyword
+![Alt text](assets/unity_shader/image-30.png)
+启用局部关键字变体。开启后对应材质的着色器会被切换为该变体。对局部和全局关键字都有效（但是用该函数开启的话全局关键字似乎会被视为局部关键字，需要用Material.DisableKeyword才能切回默认变体）
+#### Material.DisableKeyword
+![Alt text](assets/unity_shader/image-31.png)
+关闭局部关键字变体。关闭后对应材质的着色器会被切换为默认变体。对局部关键字和用Material.EnableKeyword开启的变体有效（即便是全局关键字也会被视为局部关键字？）
 
 ## Stencil Buff（模板缓冲）
 
