@@ -29,6 +29,16 @@
         - [HDR Output](#hdr-output)
         - [Tonemapping](#tonemapping)
   - [渲染顺序](#渲染顺序)
+  - [渲染优化](#渲染优化)
+    - [批处理](#批处理)
+      - [静态合批（static batch）](#静态合批static-batch)
+        - [定义](#定义)
+        - [优点](#优点)
+        - [缺点](#缺点)
+        - [合批限制](#合批限制)
+        - [开启方式](#开启方式)
+  - [GPU](#gpu)
+    - [Constant Buffer（CBUFFER 常量缓冲区）](#constant-buffercbuffer-常量缓冲区)
 
 # Render Pipeline（渲染管线）
 将场景物体渲染到屏幕上的操作（组合顶点纹理等信息，最后形成一张二维图像）
@@ -146,3 +156,33 @@ Sorting Layer和Order in Layer可以通过组件Sorting Group进行设置
 值越小越优先
 6.Z Distance（物体距离相机距离）
 不透明物体优先从近到远 透明物体优先从远到近
+
+## 渲染优化
+### 批处理
+[关于静态批处理/动态批处理/GPU Instancing /SRP Batcher的详细剖析](https://zhuanlan.zhihu.com/p/98642798)
+
+批处理，是一种在CPU应用阶段，将**相同渲染状态**的物体合并提交的一种优化手段，主要减少了CPU频繁切换渲染状态所造成的消耗。是一种当CPU负载高于GPU时可以使用的优化方式
+
+#### 静态合批（static batch）
+
+##### 定义
+在Build（项目构建）时，会提取场景内所有静态物体的Vertex Buffer(顶点缓冲)和Index Buffer(索引缓冲)，将这些物体的顶点数据转化到世界空间下，最终生成2份所有顶点的Vertex Buffer和Index Buffer，并记录单个物体Index Buffer在这份巨大的Index Buffer对应的起始和结束位置
+在实际渲染中，会将这份合并了所有顶点的数据加载到内存并上传到显存，设置渲染状态，最后发送Draw Call（1个静态物体1个）执行渲染（每个物体实际的顶点数据根据Index Buffer记录获取）
+##### 优点
+减少切换渲染状态频率
+##### 缺点
+生成的Vertex Buffer会包体增大
+生成的Vertex Buffer会内存占用增加（物体太多可能会导致严重的内存问题）
+合批后，静态物体的Transform不能改变
+##### 合批限制
+必须使用相同材质
+##### 开启方式
+旋转物体属性面板右上角Static勾选
+![alt text](assets/unity_render_pipeline/image-10.png)
+
+
+
+## GPU
+### Constant Buffer（CBUFFER 常量缓冲区）
+一块预先分配好大小的高速显存，用于存放Shader中的常量数据（矩阵、向量等）
+容量不大，但可以和GPU快速的交换数据
