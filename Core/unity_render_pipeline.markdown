@@ -31,7 +31,7 @@
   - [渲染顺序](#渲染顺序)
   - [渲染优化](#渲染优化)
     - [批处理](#批处理)
-      - [静态合批（static batch）](#静态合批static-batch)
+      - [静态合批（static batching）](#静态合批static-batching)
         - [定义](#定义)
         - [优点](#优点)
         - [缺点](#缺点)
@@ -163,19 +163,21 @@ Sorting Layer和Order in Layer可以通过组件Sorting Group进行设置
 
 批处理，是一种在CPU应用阶段，将**相同渲染状态**的物体合并提交的一种优化手段，主要减少了CPU频繁切换渲染状态所造成的消耗。是一种当CPU负载高于GPU时可以使用的优化方式
 
-#### 静态合批（static batch）
-
+#### 静态合批（static batching）
+[Static batching](https://docs.unity3d.com/Manual/static-batching.html)
+[游戏图形批量渲染及优化：Unity静态合批技术](https://www.gameres.com/876479.html)
 ##### 定义
-在Build（项目构建）时，会提取场景内所有静态物体的Vertex Buffer(顶点缓冲)和Index Buffer(索引缓冲)，将这些物体的顶点数据转化到世界空间下，最终生成2份所有顶点的Vertex Buffer和Index Buffer，并记录单个物体Index Buffer在这份巨大的Index Buffer对应的起始和结束位置
-在实际渲染中，会将这份合并了所有顶点的数据加载到内存并上传到显存，设置渲染状态，最后发送Draw Call（1个静态物体1个）执行渲染（每个物体实际的顶点数据根据Index Buffer记录获取）
+在Build（项目构建）时，会将场景内的所有静态物体网格顶点转化到世界空间下（为了让合并网格下的所有顶点坐标空间保持一致）并合并，最终生成包含所有顶点的Vertex Buffer和Index Buffer文件，并记录单个物体Index Buffer在这份巨大的Index Buffer对应的起始和结束位置
+在实际渲染中，会将这份合并网格数据加载到内存，并在一个批次内绘制所有可见的静态物体，如果其中某些物体不可见（被剔除或者隐藏），会根据Index Buffer里的记录跳过对应物体网格，分化为多个Draw Call提交，但还是属于同个批次，并不会改变渲染状态
 ##### 优点
 减少切换渲染状态频率
 ##### 缺点
-生成的Vertex Buffer会包体增大
-生成的Vertex Buffer会内存占用增加（物体太多可能会导致严重的内存问题）
-合批后，静态物体的Transform不能改变
+生成的合并网格数据会使包体增大
+生成的合并网格数据会常驻使内存占用增加（顶点数据太多可能会导致严重的内存问题）
 ##### 合批限制
 必须使用相同材质
+单批次上限为64k vertices
+合批后，静态物体的Transform不能改变
 ##### 开启方式
 旋转物体属性面板右上角Static勾选
 ![alt text](assets/unity_render_pipeline/image-10.png)
