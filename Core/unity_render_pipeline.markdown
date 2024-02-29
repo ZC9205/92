@@ -37,6 +37,12 @@
         - [缺点](#缺点)
         - [合批限制](#合批限制)
         - [开启方式](#开启方式)
+      - [动态合批（dynamic batching）](#动态合批dynamic-batching)
+        - [定义](#定义-1)
+        - [优点](#优点-1)
+        - [缺点](#缺点-1)
+        - [合批限制](#合批限制-1)
+        - [开启方式](#开启方式-1)
   - [GPU](#gpu)
     - [Constant Buffer（CBUFFER 常量缓冲区）](#constant-buffercbuffer-常量缓冲区)
 
@@ -164,7 +170,7 @@ Sorting Layer和Order in Layer可以通过组件Sorting Group进行设置
 批处理，是一种在CPU应用阶段，将**相同渲染状态**的物体合并提交的一种优化手段，主要减少了CPU频繁切换渲染状态所造成的消耗。是一种当CPU负载高于GPU时可以使用的优化方式
 
 #### 静态合批（static batching）
-[Static batching](https://docs.unity3d.com/Manual/static-batching.html)
+[static-batching](https://docs.unity3d.com/Manual/static-batching.html)
 [游戏图形批量渲染及优化：Unity静态合批技术](https://www.gameres.com/876479.html)
 ##### 定义
 在Build（项目构建）时，会将场景内的所有静态物体网格顶点转化到世界空间下（为了让合并网格下的所有顶点坐标空间保持一致）并合并，最终生成包含所有顶点的Vertex Buffer和Index Buffer文件，并记录单个物体Index Buffer在这份巨大的Index Buffer对应的起始和结束位置
@@ -182,6 +188,24 @@ Sorting Layer和Order in Layer可以通过组件Sorting Group进行设置
 旋转物体属性面板右上角Static勾选
 ![alt text](assets/unity_render_pipeline/image-10.png)
 
+#### 动态合批（dynamic batching）
+[dynamic-batching](https://docs.unity3d.com/Manual/dynamic-batching.html)
+##### 定义
+在渲染时，会根据渲染顺序查找前后符合动态合批条件的物体，将顶点转化到世界坐标空间后合并网格，并在一个批次内提交
+##### 优点
+方便，只要开启动态合批Unity就会自动执行合批
+##### 缺点
+限制较多，很多情况下无法合批
+转换顶点坐标空间时本身会有一定消耗
+##### 合批限制
+必须使用相同材质
+合批物体顶点不能超过300个（如果使用了更多着色器属性如UV0,UV1 顶点数量不能超过180个）
+##### 开启方式
+内置渲染管线
+![alt text](assets/unity_render_pipeline/image-11.png)
+URP
+![alt text](assets/unity_render_pipeline/image-12.png)
+SRP
 
 
 ## GPU
