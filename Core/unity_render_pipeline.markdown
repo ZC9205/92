@@ -43,6 +43,18 @@
         - [缺点](#缺点-1)
         - [合批限制](#合批限制-1)
         - [开启方式](#开启方式-1)
+      - [GPU Instancing](#gpu-instancing)
+        - [定义](#定义-2)
+        - [优点](#优点-2)
+        - [缺点](#缺点-2)
+        - [合批限制](#合批限制-2)
+        - [开启方式](#开启方式-2)
+      - [SRP Batcher](#srp-batcher)
+        - [定义](#定义-3)
+        - [优点](#优点-3)
+        - [缺点](#缺点-3)
+        - [合批限制](#合批限制-3)
+        - [开启方式](#开启方式-3)
   - [GPU](#gpu)
     - [Constant Buffer（CBUFFER 常量缓冲区）](#constant-buffercbuffer-常量缓冲区)
 
@@ -206,6 +218,76 @@ Sorting Layer和Order in Layer可以通过组件Sorting Group进行设置
 URP
 ![alt text](assets/unity_render_pipeline/image-12.png)
 SRP
+![alt text](assets/unity_render_pipeline/image-13.png)
+
+#### GPU Instancing
+[gpu-instancing](https://docs.unity3d.com/Manual/GPUInstancing.html)
+##### 定义
+这种合批方式只能作用于相同网格和材质的物体，一般作用于场景内大量相同重复物体如很多树
+渲染时会只保存一份网格数据（因为物体网格都相同），分别保存每个物体的transform数据（位置 缩放 旋转），每个物体拥有一个独立的Instance_Id，最终将这些物体放在同一个Draw Call内渲染
+可以使用MaterialPropertyBlock来修改个别物体的材质属性（包括纹理），不会影响到合批
+是否成功合批可以在Frame Debugger中查看
+![alt text](assets/unity_render_pipeline/image-27.png)
+
+##### 优点
+大批量相同物体渲染时优于静态合批（只需要保存一份网格数据）
+
+##### 缺点
+只限于网格相同物体
+
+##### 合批限制
+必须使用相同网格
+必须使用相同材质
+与SRP Batcher冲突（SRP Batcher优先级更高）
+
+##### 开启方式
+SRP开关
+![alt text](assets/unity_render_pipeline/image-25.png)
+在shader内设置开启
+![alt text](assets/unity_render_pipeline/image-14.png)
+Material面板属性开启
+![alt text](assets/unity_render_pipeline/image-28.png)
+定义Property里的属性值需要包裹在UNITY_INSTANCING_BUFFER_START和UNITY_INSTANCING_BUFFER_END（纹理属性除外）
+![alt text](assets/unity_render_pipeline/image-15.png)
+在顶点和片元着色器的输入中，加入Instance_Id
+![alt text](assets/unity_render_pipeline/image-16.png)
+![alt text](assets/unity_render_pipeline/image-17.png)
+获取属性值通过UNITY_ACCESS_INSTANCED_PROP获取
+![alt text](assets/unity_render_pipeline/image-18.png)
+
+#### SRP Batcher
+[srp-batcher](https://docs.unity3d.com/Manual/SRPBatcher.html)
+##### 定义
+可以将共享同Shader变体但材质不同的物体进行合批
+使用专用代码将不同材质（相同Shader变体）的属性分别上传到GPU常量缓冲（Const Buffer）中，并持久保存
+使用专用代码将物体相关属性（如transform）上传到GPU
+不同材质的纹理图不同也不影响合批
+满足SRP Batcher的shader面板选项会显示compatible
+![alt text](assets/unity_render_pipeline/image-23.png)
+是否成功合批可以在Frame Debugger中查看
+![alt text](assets/unity_render_pipeline/image-24.png)
+
+##### 优点
+可以合批不同材质，合批条件较宽
+使用专用代码上传物体数据和材质属性，效率更高
+上传的材质属性会持久保存在GPU的常量缓冲中，因此渲染同材质的物体时，不需要再次上传数据
+
+##### 缺点
+
+
+##### 合批限制
+共享相同的着色器变体
+不能是粒子
+不能使用MaterialPropertyBlock来修改材质属性
+
+##### 开启方式
+URP
+![alt text](assets/unity_render_pipeline/image-22.png)
+SRP
+![alt text](assets/unity_render_pipeline/image-21.png)
+将Property相关属性放置在UnityPerMaterial，相关内置引擎属性放置在UnityPerDraw
+![alt text](assets/unity_render_pipeline/image-19.png)
+![alt text](assets/unity_render_pipeline/image-20.png)
 
 
 ## GPU
