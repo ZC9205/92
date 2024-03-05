@@ -152,3 +152,6 @@ Mipmap是种对原始纹理产出逐级缩略图的技术
 在采样对象非方形时，效果优于同性过滤
 ### 缺点
 有一定的性能消耗
+
+## 颜色空间
+[Gamma、Linear、sRGB 和Unity Color Space，你真懂了吗](https://zhuanlan.zhihu.com/p/66558476)
