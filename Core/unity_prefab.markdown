@@ -1,3 +1,6 @@
+- [Prefab（预制体）](#prefab预制体)
+  - [属性变动](#属性变动)
+
 # Prefab（预制体）
 ## 属性变动
 预制体绑定Position(位置)、Rotation(旋转)外的属性(Transform和Rect Transform一致)。
