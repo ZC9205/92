@@ -1,4 +1,6 @@
 - [Component(组件)](#component组件)
+  - [Transform](#transform)
+    - [Rotation（旋转方向）](#rotation旋转方向)
   - [Mask(遮罩)](#mask遮罩)
     - [作用](#作用)
     - [原理](#原理)
@@ -8,6 +10,23 @@
     - [使用](#使用)
 
 # Component(组件)
+
+
+## Transform
+
+### Rotation（旋转方向）
+面板上的x、y、z，对应的是世界空间下的x、y、z轴，数值变动意为物体环绕着世界空间对应轴旋转该数值的角度
+如下图x=20、y=20意为物体绕着世界坐标x轴旋转20°，又绕着世界坐标y轴旋转了20°
+![alt text](assets/unity_component/image-4.png)
+通过代码修改
+![alt text](assets/unity_component/image-5.png)
+transform.right/transform.up/transform.forward
+意为物体旋转自身坐标轴的x/y/z轴，指向世界空间的某个坐标
+如下图，transform.right=new Vector3(10,10,0)，意为旋转自身，让自身的x轴指向世界空间(10,10,0)的位置
+![alt text](assets/unity_component/image-6.png)
+![alt text](assets/unity_component/image-8.png)
+![alt text](assets/unity_component/image-9.png)
+
 ## Mask(遮罩)
 ### 作用
 限制Mask组件Go下所有子节点的显示，超出Go所在Rect范围部分都不会显示
