@@ -53,6 +53,7 @@
 当前画面还未显示完全，就被下一屏画面所覆盖（画面显示是逐行或逐列进行逐像素填充），导致画面产生"撕裂"
 开启垂直同步，显卡和显示器会受到频率制约，当垂直同步信号到达后（eg.80HZ），才会进行下一屏绘制，保证
 屏幕的顺滑稳定
+![alt text](assets/game/image-7.png)
 
 ## Picture Detail（图片信息）
 ![Alt text](assets/game/image-1.png)

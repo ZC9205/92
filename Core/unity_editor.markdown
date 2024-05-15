@@ -24,6 +24,8 @@
     - [GUIStyle（GUI模式类型）](#guistylegui模式类型)
   - [Event（GUI交互（键盘/鼠标）事件）](#eventgui交互键盘鼠标事件)
     - [Event.current（当前交互）](#eventcurrent当前交互)
+  - [PrefabUtility](#prefabutility)
+    - [PrefabUtility.SavePrefabAsset(GameObject go)](#prefabutilitysaveprefabassetgameobject-go)
 
 
 # Editor（编辑器）
@@ -182,3 +184,7 @@ GUI.skin.button 按钮类型
 
 ### Event.current（当前交互）
 ![Alt text](assets/unity_editor/image-6.png)
+
+## PrefabUtility
+###  PrefabUtility.SavePrefabAsset(GameObject go)
+在Editor模式下修改GameObject后，使用该命令将变动保存到硬盘
