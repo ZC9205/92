@@ -31,29 +31,35 @@
   - [渲染顺序](#渲染顺序)
   - [渲染优化](#渲染优化)
     - [批处理](#批处理)
-      - [静态合批（static batching）](#静态合批static-batching)
+      - [UGUI合批（UGUI batching）](#ugui合批ugui-batching)
         - [定义](#定义)
+          - [UGUI元素定义](#ugui元素定义)
+          - [UGUI元素排序](#ugui元素排序)
+          - [UGUI元素合批与渲染](#ugui元素合批与渲染)
+        - [合批限制](#合批限制)
+      - [静态合批（static batching）](#静态合批static-batching)
+        - [定义](#定义-1)
         - [优点](#优点)
         - [缺点](#缺点)
-        - [合批限制](#合批限制)
+        - [合批限制](#合批限制-1)
         - [开启方式](#开启方式)
       - [动态合批（dynamic batching）](#动态合批dynamic-batching)
-        - [定义](#定义-1)
+        - [定义](#定义-2)
         - [优点](#优点-1)
         - [缺点](#缺点-1)
-        - [合批限制](#合批限制-1)
+        - [合批限制](#合批限制-2)
         - [开启方式](#开启方式-1)
       - [GPU Instancing](#gpu-instancing)
-        - [定义](#定义-2)
+        - [定义](#定义-3)
         - [优点](#优点-2)
         - [缺点](#缺点-2)
-        - [合批限制](#合批限制-2)
+        - [合批限制](#合批限制-3)
         - [开启方式](#开启方式-2)
       - [SRP Batcher](#srp-batcher)
-        - [定义](#定义-3)
+        - [定义](#定义-4)
         - [优点](#优点-3)
         - [缺点](#缺点-3)
-        - [合批限制](#合批限制-3)
+        - [合批限制](#合批限制-4)
         - [开启方式](#开启方式-3)
   - [GPU](#gpu)
     - [Constant Buffer（CBUFFER 常量缓冲区）](#constant-buffercbuffer-常量缓冲区)
@@ -180,6 +186,27 @@ Sorting Layer和Order in Layer可以通过组件Sorting Group进行设置
 [关于静态批处理/动态批处理/GPU Instancing /SRP Batcher的详细剖析](https://zhuanlan.zhihu.com/p/98642798)
 
 批处理，是一种在CPU应用阶段，将**相同渲染状态**的物体合并提交的一种优化手段，主要减少了CPU频繁切换渲染状态所造成的消耗。是一种当CPU负载高于GPU时可以使用的优化方式
+
+#### UGUI合批（UGUI batching）
+[Unity3D UGUI系列之合批](https://blog.csdn.net/sinat_25415095/article/details/112388638)
+##### 定义
+###### UGUI元素定义
+UGUI元素为需要放置在Canvas（画布）上才能进行渲染的元素，需要继承ICanvasElement接口
+###### UGUI元素排序
+1.获取Canvas下元素的depth（深度值），不需要显示depth=-1，需要显示最底层depth=0，层级
+往上叠加则depth依次+1（如depth=1元素必须有部分显示是叠加在depth=0元素之上的）
+2.依次对Canvas下元素进行排序
+3.按照depth从小到大排序，depth相同则参考material ID
+4.按照material ID从小到大排序，material ID相同则参考texture ID
+5.按照texture ID从小到大排序，texture ID相同则参考Hierarchy上节点顺序
+6.按照Hierarchy上节点从高到低排序
+###### UGUI元素合批与渲染
+UGUI元素排序后，从首个开始判断是否满足和下一个元素合批的条件（相同的材质与贴图），可以的话
+则继续向后进行判断，直到某个元素不满足条件中断，将前面所有满足条件的元素合到同一批次，并提交
+渲染命令。接着继续这个流程，直到遍历Canvas下所有元素
+##### 合批限制
+相同材质
+相同贴图
 
 #### 静态合批（static batching）
 [static-batching](https://docs.unity3d.com/Manual/static-batching.html)
