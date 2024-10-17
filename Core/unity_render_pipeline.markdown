@@ -180,11 +180,12 @@ Sorting Layer和Order in Layer可以通过组件Sorting Group进行设置
 值越小越优先
 6.Z Distance（物体距离相机距离）
 不透明物体优先从近到远 透明物体优先从远到近
+特殊情况：
+UGUI元素（Canvas下的可视元素），每个Canvas会对自己内部的UGUI元素进行排序并合并批次，之后再将合并后的一个批次作为一个可视物体，并和其他物体一起（如3D模型）参与到上面的渲染排序
 
 ## 渲染优化
 ### 批处理
 [关于静态批处理/动态批处理/GPU Instancing /SRP Batcher的详细剖析](https://zhuanlan.zhihu.com/p/98642798)
-
 批处理，是一种在CPU应用阶段，将**相同渲染状态**的物体合并提交的一种优化手段，主要减少了CPU频繁切换渲染状态所造成的消耗。是一种当CPU负载高于GPU时可以使用的优化方式
 
 #### UGUI合批（UGUI batching）
@@ -193,20 +194,19 @@ Sorting Layer和Order in Layer可以通过组件Sorting Group进行设置
 ###### UGUI元素定义
 UGUI元素为需要放置在Canvas（画布）上才能进行渲染的元素，需要继承ICanvasElement接口
 ###### UGUI元素排序
-1.获取Canvas下元素的depth（深度值），不需要显示depth=-1，需要显示最底层depth=0，层级
-往上叠加则depth依次+1（如depth=1元素必须有部分显示是叠加在depth=0元素之上的）
+每个Canvas会对其节点下所有UGUI元素进行排序（排除嵌套Canvas，嵌套Canvas下的元素归属于嵌套Canvas本身）
+1.获取Canvas下元素的depth（深度值），不需要显示depth=-1，需要显示最底层depth=0，层级往上叠加则depth依次+1（如depth=1元素必须有部分显示是叠加在depth=0元素之上的）
 2.依次对Canvas下元素进行排序
 3.按照depth从小到大排序，depth相同则参考material ID
 4.按照material ID从小到大排序，material ID相同则参考texture ID
 5.按照texture ID从小到大排序，texture ID相同则参考Hierarchy上节点顺序
 6.按照Hierarchy上节点从高到低排序
 ###### UGUI元素合批与渲染
-UGUI元素排序后，从首个开始判断是否满足和下一个元素合批的条件（相同的材质与贴图），可以的话
-则继续向后进行判断，直到某个元素不满足条件中断，将前面所有满足条件的元素合到同一批次，并提交
-渲染命令。接着继续这个流程，直到遍历Canvas下所有元素
+每个Canvas下所有元素排序后，从第一个元素开始判断是否满足和下一个元素合批的条件（相同的材质与贴图），可以的话则继续向后进行判断，直到某个元素不满足条件而中断。将前面所有满足条件的元素合到同一批次，接着继续这个流程，直到将Canvas下所有元素划分成若干批次
+合并后的单个批次会作为一个可视物体（Sorting Layer/Order in Layer/Z Distance这些属性和所属Canvas一致）和其他可视物体（如3D模型）一起参与渲染排序
 ##### 合批限制
-相同材质
-相同贴图
+必须使用相同材质
+必须使用相同贴图
 
 #### 静态合批（static batching）
 [static-batching](https://docs.unity3d.com/Manual/static-batching.html)
