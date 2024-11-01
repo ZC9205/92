@@ -191,19 +191,19 @@ UGUI元素（Canvas下的可视元素），每个Canvas会对自己内部的UGUI
 #### UGUI合批（UGUI batching）
 [Unity3D UGUI系列之合批](https://blog.csdn.net/sinat_25415095/article/details/112388638)
 ##### 定义
+UGUI合批是将Canvas上满足合批条件的UGUI进行合并（顶点数据合并，网格合并），形成一个新物体后，再加入渲染流程
 ###### UGUI元素定义
 UGUI元素为需要放置在Canvas（画布）上才能进行渲染的元素，需要继承ICanvasElement接口
 ###### UGUI元素排序
 每个Canvas会对其节点下所有UGUI元素进行排序（排除嵌套Canvas，嵌套Canvas下的元素归属于嵌套Canvas本身）
-1.获取Canvas下元素的depth（深度值），不需要显示depth=-1，需要显示最底层depth=0，层级往上叠加则depth依次+1（如depth=1元素必须有部分显示是叠加在depth=0元素之上的）
-2.依次对Canvas下元素进行排序
-3.按照depth从小到大排序，depth相同则参考material ID
-4.按照material ID从小到大排序，material ID相同则参考texture ID
-5.按照texture ID从小到大排序，texture ID相同则参考Hierarchy上节点顺序
-6.按照Hierarchy上节点从高到低排序
+1.获取Canvas下UGUI元素的depth（深度值），按照depth从小到大排序，depth相同则参考material ID
+depth（深度值），Canvas下可显示的UGUI元素都有其depth。不显示的depth=-1，最底层的显示元素depth=0，层级往上叠加且不满足合批条件则depth+1（比如depth=1元素需要满足3个条件 1.Hierarchy的位置在depth=0元素之后 2.有部分网格和depth=0元素的网格重叠（Rotation、Scale、Pos Z等属性调整会影响网格重叠判定） 3.和depth=0元素的材质或贴图不同）
+2.按照material ID（材质id）从小到大排序，material ID相同则参考texture ID
+3.按照texture ID（纹理id）从小到大排序，texture ID相同则参考Hierarchy上节点顺序
+4.按照Hierarchy窗口Canvas节点往下从前到后排序
 ###### UGUI元素合批与渲染
-每个Canvas下所有元素排序后，从第一个元素开始判断是否满足和下一个元素合批的条件（相同的材质与贴图），可以的话则继续向后进行判断，直到某个元素不满足条件而中断。将前面所有满足条件的元素合到同一批次，接着继续这个流程，直到将Canvas下所有元素划分成若干批次
-合并后的单个批次会作为一个可视物体（Sorting Layer/Order in Layer/Z Distance这些属性和所属Canvas一致）和其他可视物体（如3D模型）一起参与渲染排序
+当Canvas下所有元素排序后，从第一个元素开始判断是否满足和下一个元素合批的条件（相同的材质与贴图），可以的话则继续向后进行判断，直到某个元素不满足条件而中断。将前面所有满足条件的元素合并为一个新的物体（顶点数据合并，网格合并），接着继续这个流程，直到将Canvas下所有元素划分成若干个新的物体
+合并后的新物体（Sorting Layer/Order in Layer/Z Distance这些属性和所属Canvas一致）会像其他可视物体（如3D模型）一起参与渲染排序，之后再进行渲染
 ##### 合批限制
 必须使用相同材质
 必须使用相同贴图
