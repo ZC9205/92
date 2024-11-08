@@ -1,5 +1,9 @@
 - [Editor（编辑器）](#editor编辑器)
-  - [Cutsom Class Editor（自定义类编辑）](#cutsom-class-editor自定义类编辑)
+  - [InitializeOnLoad（类方法自动初始化）](#initializeonload类方法自动初始化)
+  - [Cutsom Class Editor（自定义组件编辑）](#cutsom-class-editor自定义组件编辑)
+    - [finishedDefaultHeaderGUI（Inspector面板版头区域绘制）](#finisheddefaultheaderguiinspector面板版头区域绘制)
+      - [特定组件的GameObject](#特定组件的gameobject)
+      - [全部GameObject](#全部gameobject)
     - [OnInspectorGUI（Inspector面板绘制）](#oninspectorguiinspector面板绘制)
     - [OnSceneGUI（Scene面板绘制）](#onsceneguiscene面板绘制)
       - [Handles](#handles)
@@ -7,6 +11,7 @@
         - [HandleUtility.AddDefaultControl（启用Scene场景GUI交互）](#handleutilityadddefaultcontrol启用scene场景gui交互)
       - [Tools](#tools)
         - [Tools.current](#toolscurrent)
+    - [2](#2)
   - [Editor GUI（UI绘制 可用在OnInspectorGUI/OnSceneGUI中）](#editor-guiui绘制-可用在oninspectorguionscenegui中)
     - [UI Class（绘制UI用到的几个核心类）](#ui-class绘制ui用到的几个核心类)
       - [GUI](#gui)
@@ -39,7 +44,10 @@
       - [Selection.objects（选中的所有文件）](#selectionobjects选中的所有文件)
       - [Selection.activeGameObject（选中预制）](#selectionactivegameobject选中预制)
       - [Selection.gameObjects（选中的所有预制）](#selectiongameobjects选中的所有预制)
-    - [DragAndDrop（主要用于获取当前拖拽节点）](#draganddrop主要用于获取当前拖拽节点)
+    - [DragAndDrop（拖放节点）](#draganddrop拖放节点)
+      - [DragAndDrop.paths（当前拖拽的所有文件路径）](#draganddroppaths当前拖拽的所有文件路径)
+      - [DragAndDrop.objectReferences（当前拖拽的所有物体信息）](#draganddropobjectreferences当前拖拽的所有物体信息)
+      - [使用事例](#使用事例)
   - [Event（GUI交互（键盘/鼠标）事件）](#eventgui交互键盘鼠标事件)
     - [Event.current（当前交互）](#eventcurrent当前交互)
   - [PrefabUtility](#prefabutility)
@@ -48,12 +56,73 @@
 
 # Editor（编辑器）
 
-## Cutsom Class Editor（自定义类编辑）
-声明自定义类的编辑类，命名为类名+Editor（如自定义类为CustomComponent1，则对应的编辑器类为CustomComponent1Editor）
+## InitializeOnLoad（类方法自动初始化）
+当UnityEditor启动时，会自动执行带有[InitializeOnLoad]类的**静态**构造方法
+```C
+[InitializeOnLoad]
+public class MyEditorInitializer
+{
+    static MyEditorInitializer()
+    {
+        Debug.Log("Initialize Success");
+    }
+}
+```
+![alt text](assets/unity_editor/image-37.png)
+
+## Cutsom Class Editor（自定义组件编辑）
+声明自定义组件的编辑类，命名为组件类名+Editor（如自定义组件为CustomComponent1，则对应的编辑器名称为CustomComponent1Editor）
 继承UnityEditor.Editor
 ![Alt text](assets/unity_editor/image.png)
 添加CustomEditor特性
 ![Alt text](assets/unity_editor/image-1.png)
+
+### finishedDefaultHeaderGUI（Inspector面板版头区域绘制）
+可以通过注册Editor.finishedDefaultHeaderGUI来实现Inspector的版头区域的GUI绘制，该方法每帧都会调用
+```C
+void OnFinishedDefaultHeaderGUI(UnityEditor.Editor editor)
+{
+    var go = editor.target as GameObject;
+    if (go == null)
+    {
+        return;
+    }
+        
+    EditorGUILayout.LabelField("Custom Header GUI");
+    GUILayout.Button("Custom Button");
+}
+```
+![alt text](assets/unity_editor/image-39.png)
+
+#### 特定组件的GameObject
+在组件Editor的OnEnable注册事件
+```C
+private void OnEnable()
+{
+    UnityEditor.Editor.finishedDefaultHeaderGUI += OnFinishedDefaultHeaderGUI;
+}
+```
+在OnDisable取消事件
+```C
+private void OnEnable()
+{
+    UnityEditor.Editor.finishedDefaultHeaderGUI -= OnFinishedDefaultHeaderGUI;
+}
+```
+#### 全部GameObject
+在持有[InitializeOnLoad]类的静态构造函数中，注册相关事件
+```C
+[InitializeOnLoad]
+public class MyEditorInitializer
+{
+    static MyEditorInitializer()
+    {
+        Debug.Log("Initialize Success");
+        
+        UnityEditor.Editor.finishedDefaultHeaderGUI += OnFinishedDefaultHeaderGUI;
+    }
+}
+```
 
 ### OnInspectorGUI（Inspector面板绘制）
 在继承UnityEditor.Editor的脚本中，声明函数OnInspectorGUI
@@ -103,6 +172,11 @@ Scene视图上方的工具列表
 ##### Tools.current
 当前选中的工具
 ![Alt text](assets/unity_editor/image-9.png)
+
+
+
+### 2
+
 
 ## Editor GUI（UI绘制 可用在OnInspectorGUI/OnSceneGUI中）
 
@@ -348,6 +422,7 @@ EditorGUILayout.EndHorizontal();
 
 ### Selection（选中节点）
 可以通过Selection获取在Hierarchy和Project窗口中选中的节点信息
+
 #### Selection.count（选中节点数量）
 ![alt text](assets/unity_editor/image-28.png)
 
@@ -367,7 +442,53 @@ EditorGUILayout.EndHorizontal();
 包含Hierarchy展示的预制节点和Project里的预制体，可以获取到所有选中预制的信息（选中的如果是其他文件类型则对应的GameObject=null）
 ![alt text](assets/unity_editor/image-32.png)
 
-### DragAndDrop（主要用于获取当前拖拽节点）
+### DragAndDrop（拖放节点）
+
+#### DragAndDrop.paths（当前拖拽的所有文件路径）
+包含Project里的所有文件类型，可以获取到所有拖拽文件的路径
+![alt text](assets/unity_editor/image-33.png)
+
+#### DragAndDrop.objectReferences（当前拖拽的所有物体信息）
+包含Hierarchy的所有物体及Project里的所有文件类型，可以获取到所有拖拽物体的信息
+![alt text](assets/unity_editor/image-34.png)
+
+#### 使用事例
+当物体被拖拽到特定区域时，打印物体信息
+```C      
+Rect dropArea = new Rect(10, 10, 200, 100);
+GUI.Box(dropArea, "拖放区域");
+
+Event evt = Event.current;
+switch (evt.type)
+{
+    case EventType.DragUpdated:
+        if (dropArea.Contains(evt.mousePosition))
+        {
+            DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+            Event.current.Use();
+        }
+        break;
+
+    case EventType.DragPerform:
+        if (dropArea.Contains(evt.mousePosition))
+        {
+            DragAndDrop.AcceptDrag();
+            foreach (Object obj in DragAndDrop.objectReferences)
+            {
+                Debug.Log("拖放的对象：" + obj.name);
+            }
+            Event.current.Use();
+        }
+        break;
+
+    case EventType.DragExited:
+        Debug.Log("拖放操作已取消或拖离目标区域");
+        Event.current.Use();
+        break;
+}
+```
+![alt text](assets/unity_editor/image-36.png)
+
 
 Editor.finishedDefaultHeaderGUI
 
