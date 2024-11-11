@@ -35,7 +35,7 @@
 #### 首先获取所有包含BaseRaycaster组件的GameObject（Camera和Canvas）
 按照存入RaycasterManager的顺序获取所有处于Active状态的GameObject
 ![alt text](assets/unity_ugui/image-58.png)
-拥有继承BaseRaycaster组件的物体在创建时会记录到RaycasterManager（Unity中管理Raycaster的静态类），比如Canvas持有GraphicRaycaster，Camera持有的PhysicsRaycaster
+拥有继承BaseRaycaster组件的物体在创建时会记录到RaycasterManager（Unity中管理Raycaster的静态类），比如GraphicRaycaster(Canvas交互需要)，PhysicsRaycaster（Camera交互需要）
 ![alt text](assets/unity_ugui/image-59.png)
 ![alt text](assets/unity_ugui/image-60.png)
 接着以这些GameObject为根节点，筛选可以进行交互的GameObjects
