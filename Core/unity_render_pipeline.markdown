@@ -36,6 +36,7 @@
           - [UGUI元素定义](#ugui元素定义)
           - [UGUI元素排序](#ugui元素排序)
           - [UGUI元素合批与渲染](#ugui元素合批与渲染)
+          - [其他注意事项](#其他注意事项)
         - [合批限制](#合批限制)
       - [静态合批（static batching）](#静态合批static-batching)
         - [定义](#定义-1)
@@ -204,6 +205,12 @@ depth（深度值），Canvas下可显示的UGUI元素都有其depth。不显示
 ###### UGUI元素合批与渲染
 当Canvas下所有元素排序后，从第一个元素开始判断是否满足和下一个元素合批的条件（相同的材质与贴图），可以的话则继续向后进行判断，直到某个元素不满足条件而中断。将前面所有满足条件的元素合并为一个新的物体（顶点数据合并，网格合并），接着继续这个流程，直到将Canvas下所有元素划分成若干个新的物体
 合并后的新物体（Sorting Layer/Order in Layer/Z Distance这些属性和所属Canvas一致）会像其他可视物体（如3D模型）一起参与渲染排序，之后再进行渲染
+###### 其他注意事项
+当Canvas的Render Mode设置为Overlay，其节点下的所有UGUI会被Unity的隐藏相机（不会显示在Hierarchy节点内）渲染，由于隐藏相机的深度是最高的，所以UGUI会最后才渲染，也就是显示在最上层
+当Canvas的Render Mode设置为Camera，其节点下的所有UGUI只会被Canvas设置的Render Camera渲染。如果没有设置Render Camera或者Canvas自身的Layer不包含在Camera可渲染的Layer之内（Culling Mask），则Canvas下的所有UGUI都不会被渲染
+Canvas节点下UGUI的Layer实际上是跟随Canvas自身的Layer，因此设置UGUI的Layer本身并没有意义
+
+
 ##### 合批限制
 必须使用相同材质
 必须使用相同贴图
