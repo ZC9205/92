@@ -207,7 +207,7 @@ depth（深度值），Canvas下可显示的UGUI元素都有其depth。不显示
 合并后的新物体（Sorting Layer/Order in Layer/Z Distance这些属性和所属Canvas一致）会像其他可视物体（如3D模型）一起参与渲染排序，之后再进行渲染
 ###### 其他注意事项
 当Canvas的Render Mode设置为Overlay，其节点下的所有UGUI会被Unity的隐藏相机（不会显示在Hierarchy节点内）渲染，由于隐藏相机的深度是最高的，所以UGUI会最后才渲染，也就是显示在最上层
-当Canvas的Render Mode设置为Camera，其节点下的所有UGUI只会被Canvas设置的Render Camera渲染。如果没有设置Render Camera或者Canvas自身的Layer不包含在Camera可渲染的Layer之内（Culling Mask），则Canvas下的所有UGUI都不会被渲染
+当Canvas的Render Mode设置为Camera，其节点下的所有UGUI只会被Canvas设置的Render Camera渲染。如果没有设置Render Camera则将其Render Mode视为Overlay， 如果Canvas自身的Layer不包含在Camera可渲染的Layer之内（Culling Mask），则Canvas下的所有UGUI都不会被渲染
 Canvas节点下UGUI的Layer实际上是跟随Canvas自身的Layer，因此设置UGUI的Layer本身并没有意义
 
 
