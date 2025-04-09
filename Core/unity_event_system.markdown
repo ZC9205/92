@@ -151,16 +151,17 @@ RaycastResult加入队列的索引不同，索引较小的靠前
 #### 调用筛选出的GameObject所实现的不同交互函数（如点击、拖拽）
 
 ##### 获取实现各个交互接口的GameObject
+首先获取刚筛选出的GameObject上的所有组件(Components)，判断是否有组件实现了对应事件的实现函数(就是组件是否继承了对应交互事件的接口，比如Button组件继承了点击事件的接口IPointerClickHandler)
 ![alt text](assets/unity_ugui/image-87.png)
-
-获取GameObject上的组件，依次判断是否有组件实现对应事件接口
 ![alt text](assets/unity_ugui/image-89.png)
+![alt text](assets/unity_event_system/image-12.png)
+![alt text](assets/unity_event_system/image-13.png)
 
-有的话则用这个GameObject来实现该事件函数，没有的话则查找其父节点（再不行则以父节点依次向上）
+有的话则保存这个GameObject作为实现该事件函数的对象，没有的话则查找其父节点是否满足实现（再不行则再以父节点依次向上）
 ![alt text](assets/unity_ugui/image-88.png)
 
 ##### 调用实现方法
-对GameObject上所有实现对应事件接口的组件依次进行方法调用
+根据刚才的保存结果，取出实现各个交互事件的GameObject，找到实现对应交互事件的函数，之后调用
 ![alt text](assets/unity_ugui/image-90.png)
 ![alt text](assets/unity_ugui/image-91.png)
 
