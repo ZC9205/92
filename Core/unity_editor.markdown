@@ -19,7 +19,7 @@
         - [HandleUtility.AddDefaultControl(启用Scene场景GUI交互)](#handleutilityadddefaultcontrol启用scene场景gui交互)
       - [Tools](#tools)
         - [Tools.current](#toolscurrent)
-  - [GUI绘制](#gui绘制)
+  - [GUI绘制（传统版本）](#gui绘制传统版本)
     - [UI Class(绘制UI用到的几个核心类)](#ui-class绘制ui用到的几个核心类)
       - [GUI](#gui)
       - [EditorGUI](#editorgui)
@@ -45,6 +45,8 @@
     - [ScrollView(滑动组)](#scrollview滑动组)
     - [Horizontal(横向排序)](#horizontal横向排序)
     - [Vertical(纵向排序)](#vertical纵向排序)
+  - [GUI绘制（UXML模式）](#gui绘制uxml模式)
+    - [实际案例](#实际案例)
   - [操作行为](#操作行为)
     - [Event(当前交互信息)](#event当前交互信息)
       - [Event.current](#eventcurrent)
@@ -75,6 +77,12 @@
       - [DragAndDrop.objectReferences(当前拖放的所有物体信息)](#draganddropobjectreferences当前拖放的所有物体信息)
       - [DragAndDrop.visualMode(拖放物体时显示的标签)](#draganddropvisualmode拖放物体时显示的标签)
       - [使用事例](#使用事例)
+  - [常用接口](#常用接口)
+    - [复制文本到剪贴板](#复制文本到剪贴板)
+    - [弹出提示窗口](#弹出提示窗口)
+    - [选择目录](#选择目录)
+    - [选择文件](#选择文件)
+    - [保存文件](#保存文件)
 
 
 # Editor(编辑器)
@@ -358,7 +366,7 @@ Scene视图上方的工具列表
 当前选中的工具
 ![Alt text](assets/unity_editor/image-9.png)
 
-## GUI绘制
+## GUI绘制（传统版本）
 
 ### UI Class(绘制UI用到的几个核心类)
 #### GUI 
@@ -629,6 +637,185 @@ EditorGUILayout.EndHorizontal();
 ```
 ![alt text](assets/unity_editor/image-25.png)
 
+## GUI绘制（UXML模式）
+UXML模式，将UI整体绘制划分为3个文件
+C#文件，UI逻辑处理与动态UI加载
+UXML文件，静态UI绘制
+USS文件，UI样式设置（基本上所有UI元素都持有的属性设置，比如位置长宽颜色等）
+[UXML 官方文档](https://docs.unity3d.com/Manual/UIE-UXML.html)
+[UXML UI元素 官方文档](https://docs.unity3d.com/Manual/UIE-ElementRef.html)
+[USS 官方文档](https://docs.unity3d.com/Manual/UIE-USS.html)
+[USS 样式属性 官方文档](https://docs.unity3d.com/Manual/UIE-USS-SupportedProperties.html)
+[USS 样式属性数据类型 官方文档](https://docs.unity3d.com/Manual/UIE-USS-PropertyTypes.html)
+
+### 实际案例
+右键点击创建UXML模式文件
+![alt text](assets/unity_editor/image-55.png)
+确认后会出现3个相同命名的文件，分别为上面提及的.cs .uxml .uss文件
+![alt text](assets/unity_editor/image-56.png)
+结果弹窗展示
+![alt text](assets/unity_editor/image-57.png)
+
+.cs文件
+```C#
+public void CreateGUI()
+{
+    VisualElement root = rootVisualElement;
+
+    // 导入UXML文件
+    var visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Editor/EditorWindow/UXMLWindow.uxml");
+    VisualElement labelFromUXML = visualTree.Instantiate();
+    root.Add(labelFromUXML);
+
+    // 导入uss样式文件
+    var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Editor/EditorWindow/UXMLWindow.uss");
+    root.styleSheets.Add(styleSheet);
+    
+    //菜单按钮
+    ToolbarButton menuButton1 = root.Query<ToolbarButton>("toolbar-button-1");
+    menuButton1.clicked += () =>
+    {
+        Debug.Log("菜单按钮1");
+    };
+    ToolbarButton menuButton2 = root.Query<ToolbarButton>("toolbar-button-2");
+    menuButton2.clicked += () =>
+    {
+        Debug.Log("菜单按钮2");
+    };
+    
+    //下拉菜单
+    ToolbarMenu toolbarMenu = root.Query<ToolbarMenu>("toolbar-menu");
+    //下拉菜单选项
+    toolbarMenu.menu.AppendAction("菜单选项_1", action =>
+    {
+        menuButton1.text = "菜单_2_1";
+        menuButton2.text = "菜单_2_2";
+    });
+    toolbarMenu.menu.AppendAction("菜单选项_2", action =>
+    {
+        menuButton1.text = "菜单_3_1";
+        menuButton2.text = "菜单_3_2";
+    });
+    
+    //可视按钮
+    Button visualButton = root.Query<Button>("visual-button");
+    visualButton.clicked += () =>
+    {
+        Debug.Log("可视按钮");
+    };
+    
+    //滑动列表
+    ListView listView = root.Query<ListView>("list-view");
+    
+    //子项高度（必要）
+    listView.itemHeight = 50;
+    
+    //列表数据源（必要）
+    string[] listSource = new []{"列表项_1", "列表项_2", "列表项_3", "列表项_4", "列表项_5"};
+    listView.itemsSource = listSource;
+    
+    //列表子项创建
+    listView.makeItem = () =>
+    {
+        VisualElement item = new VisualElement();
+        //添加uss文件里的ListItem样式，子项内容改为横向排序
+        item.AddToClassList("ListItem");
+        
+        Label label = new Label();
+        label.AddToClassList("ListItemLabel");
+        item.Add(label);
+        
+        Button button = new Button();
+        button.AddToClassList("ListItemButton");
+        item.Add(button);
+
+        return item;
+    };
+    
+    //列表子项更新（数据绑定）
+    listView.bindItem = (item, index) =>
+    {
+        //对整个子项添加右键点击
+        item.AddManipulator(new ContextualMenuManipulator(evt =>
+        {
+            //弹出菜单栏1
+            evt.menu.AppendAction("右键菜单_1", action =>
+            {
+                Debug.Log("menu_1");
+            });
+            
+            //弹出菜单栏2
+            evt.menu.AppendAction("右键菜单_2", action =>
+            {
+                Debug.Log("menu_2");
+            });
+        }));
+        
+        //子项文本
+        Label label = item.Query<Label>();
+        label.text = listSource[index];
+        
+        //子项按钮
+        Button button = item.Query<Button>();
+        button.text = $"按钮_{index}";
+        button.clicked += () =>
+        {
+            Debug.Log($"列表项_{index}");
+        };
+    };
+}
+```
+.uxml文件
+```
+<?xml version="1.0" encoding="utf-8"?>
+<engine:UXML
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:engine="UnityEngine.UIElements"
+    xmlns:editor="UnityEditor.UIElements"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+>
+    <editor:Toolbar name="toolbar">
+        <!-- 菜单按钮_1 -->
+        <editor:ToolbarButton name="toolbar-button-1" text="菜单_1_1" class="ToolbarButton" />
+        <!-- 菜单按钮_2 -->
+        <editor:ToolbarButton name="toolbar-button-2" text="菜单_1_2" class="ToolbarButton" />
+        <!-- 菜单展开选项 -->
+        <editor:ToolbarMenu name="toolbar-menu" text="展开菜单" />
+    </editor:Toolbar>
+    <!-- 横向排序 -->
+    <engine:VisualElement style="flex-direction: row">
+        <!-- 文本 居中 -->
+        <engine:Label name="visual-label" text="标签" style="-unity-text-align: middle-center"/>
+        <!-- 按钮 距离左侧文本间距10px -->
+        <engine:Button name="visual-button" text="按钮" style="margin-left: 20px"/>
+    </engine:VisualElement>
+    <!-- 滑动列表 -->
+    <engine:ListView name="list-view" class="ListView" />
+</engine:UXML>
+```
+.uss文件
+```
+.ToolbarButton {
+    width: 70px;
+    -unity-text-align: middle-center;
+}
+.ListView {
+    width: 100%;
+    height: 200;
+    background-color: rgba(0,0,0,0.1);
+}
+.ListItem {
+    flex-direction: row;
+}
+.ListItemButton {
+    width: 150px;
+}
+.ListItemLabel {
+    -unity-text-align: middle-left;
+    color: aqua;
+}
+```
+
 ## 操作行为
 在Editor模式下,可以通过Event获取当前操作的行为信息
 
@@ -755,5 +942,44 @@ switch (evt.type)
 ![alt text](assets/unity_editor/image-36.png)
 
 
+## 常用接口
 
+### 复制文本到剪贴板
+```c#
+GUIUtility.systemCopyBuffer = "复制内容";
+```
 
+### 弹出提示窗口
+```c#
+EditorUtility.DisplayDialog("弹窗标题", "弹窗内容", "确认");
+```
+![alt text](assets/unity_editor/image-58.png)
+
+### 选择目录
+```c#
+//返回目录完整路径
+string folderPath = EditorUtility.OpenFolderPanel("选择目录", "Assets", "");
+```
+![alt text](assets/unity_editor/image-59.png)
+
+### 选择文件
+```c#
+//返回文件完整路径
+string filePath = EditorUtility.OpenFilePanel("选择文件", "Assets", "png");
+```
+![alt text](assets/unity_editor/image-61.png)
+
+### 保存文件
+```c#
+//返回文件保存路径
+string filePath = EditorUtility.SaveFilePanel("保存文件", "Assets", "文件名", "后缀");
+//文件内容
+List<string> content = new List<string>();
+//路径不为空时
+if (!string.IsNullOrEmpty(filePath))
+{
+    //向这个路径写入内容
+    File.WriteAllLines(filePath, content);
+}
+```
+![alt text](assets/unity_editor/image-60.png)
