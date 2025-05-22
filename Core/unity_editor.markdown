@@ -16,7 +16,7 @@
     - [Scene面板绘制](#scene面板绘制)
       - [Handles](#handles)
         - [Handles.BeginGUI \&\& Handles.EndGUI(设置GUI区间)](#handlesbegingui--handlesendgui设置gui区间)
-        - [HandleUtility.AddDefaultControl(启用Scene场景GUI交互)](#handleutilityadddefaultcontrol启用scene场景gui交互)
+        - [HandleUtility.AddDefaultControl(启用Scene视图GUI交互)](#handleutilityadddefaultcontrol启用scene视图gui交互)
       - [Tools](#tools)
         - [Tools.current](#toolscurrent)
   - [GUI绘制（传统版本）](#gui绘制传统版本)
@@ -353,7 +353,8 @@ Handles类主要用于绘制Scene面板
 在Scene内绘制GUI需要在这2个命令之间
 ![Alt text](assets/unity_editor/image-4.png)
 
-##### HandleUtility.AddDefaultControl(启用Scene场景GUI交互)
+##### HandleUtility.AddDefaultControl(启用Scene视图GUI交互)
+当无法选中Scene视图内的GUI时，可以执行此命令
 GUIUtility.GetControlID(FocusType.Passive) 获取当前控制id
 HandleUtility.AddDefaultControl(controlId) 设置id为默认控制
 ![Alt text](assets/unity_editor/image-5.png)
