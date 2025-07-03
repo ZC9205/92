@@ -1,4 +1,22 @@
 - [Unity Game（Unity开发）](#unity-gameunity开发)
+  - [Memory（内存）](#memory内存)
+    - [Managed Heap（托管堆）](#managed-heap托管堆)
+      - [管理对象](#管理对象)
+      - [管理机制](#管理机制)
+  - [C# Unmanaged Memory（非托管C#对象）](#c-unmanaged-memory非托管c对象)
+      - [注意事项](#注意事项)
+    - [Native Heap（原生堆）](#native-heap原生堆)
+      - [管理对象](#管理对象-1)
+      - [管理机制](#管理机制-1)
+      - [注意事项](#注意事项-1)
+    - [Stack（栈）](#stack栈)
+      - [管理对象](#管理对象-2)
+      - [管理机制](#管理机制-2)
+    - [GPU Memory（显存）](#gpu-memory显存)
+      - [管理对象](#管理对象-3)
+      - [管理机制](#管理机制-3)
+      - [注意事项](#注意事项-2)
+    - [Code Heap（代码堆）](#code-heap代码堆)
   - [Coroutine（协程）](#coroutine协程)
     - [说明](#说明)
     - [使用](#使用)
@@ -27,6 +45,51 @@
 
 
 # Unity Game（Unity开发）
+
+## Memory（内存）
+[Memory in Unity introduction](https://docs.unity3d.com/Manual/performance-memory.html)
+Unity项目运行时，资源内存主要分为5个部分。Managed Heap（托管堆），Native Heap（原生堆），Stack（栈），GPU Memory（显存），Code Heap（代码堆）
+
+### Managed Heap（托管堆）
+自动化管理内存堆
+#### 管理对象
+游戏内的C#类型实例，内部字段，引用类型对象
+#### 管理机制
+由Mono/il2cpp后台自动管理，创建时自动分配内存大小，并添加对象引用。销毁时去除对象引用。会定时扫描内存堆（GC 垃圾回收），标记失去引用的对象并释放对应的内存空间
+## C# Unmanaged Memory（非托管C#对象）
+[Unmanaged C# memory](https://docs.unity3d.com/Manual/performance-unmanaged-memory.html)
+在Unity.Collections命名空间下创建的类型为非托管类型，不会受Unity的托管机制影响。这些对象需要开发者手动触发Dispose进行内存释放
+#### 注意事项
+频繁创建删除物体会出现内存碎片（内存地址断断续续），增大内存消耗（创建物体时找不到足以容纳的空间地址）并造成GC卡顿（GC时会暂停CPU执行其他工作）。对频繁创建删除的物体可使用对象池之类的手段进行缓存，减少装箱拆箱（值类型、引用类型转换）
+
+### Native Heap（原生堆）
+手动管理内存堆
+#### 管理对象
+Unity原生C++/C脚本（Transform、Render等原生组件），GameObject，纹理图，音效等
+#### 管理机制
+资源需要手动进行加载卸载管理，大部分属于Unity原生对象
+#### 注意事项
+由于需要开发者自己管理，容易忽视未使用资源导致内存泄漏
+
+### Stack（栈）
+后进先出的内存地址，空间很小并且固定大小
+#### 管理对象
+函数内创建的临时变量（值类型、引用类型的对象引用）
+#### 管理机制
+作用域内被创建，一旦出了作用域就会被立即卸载回收
+
+### GPU Memory（显存）
+GPU纹理内存堆
+#### 管理对象
+上传到显存的纹理贴图
+#### 管理机制
+上传后内存扔持有对应纹理图的引用，当引用被销毁后会被回收
+#### 注意事项
+一般纹理图上传到显存后，内存中的纹理图占用就会被回收。但是如果勾选纹理图Inspector属性中的Read/Write Enabled，它就还会保持在内存中，造成一份贴图2份内存占用
+
+### Code Heap（代码堆）
+存储的是编译后对应平台机器码，一般不需要开发者关心
+
 ## Coroutine（协程）
 
 ### 说明
