@@ -4,8 +4,10 @@
   - [Mask(遮罩)](#mask遮罩)
     - [作用](#作用)
     - [原理](#原理)
-  - [Render（渲染器）](#render渲染器)
+  - [Sorting Group](#sorting-group)
     - [作用](#作用-1)
+  - [Render（渲染器）](#render渲染器)
+    - [作用](#作用-2)
     - [原理](#原理-1)
     - [使用](#使用)
 
@@ -36,6 +38,15 @@ Mask会修改默认的UI/Default材质，修改其名称并添加stencil(模板�
 Mask子节点会判定，如果其父节点包含了Mask，并且自己开启了Maskable勾选，也会修改默认的UI/Default材质，修改其名称并添加stencil数值(判断所在片元_Stencil值是否为1，1的话通过测试并渲染，不为1则舍弃)
 ![Alt text](assets/unity_component/image-2.png)
 ![Alt text](assets/unity_component/image-3.png)
+
+## Sorting Group
+![alt text](assets/unity_component/image-10.png)
+### 作用
+Sorting Group可以设置该GameObject及其子节点的Sorting Layer和Order in Layer，影响渲染顺序
+相机渲染顺序优先相机深度、不透明/透明，之后便根据Sorting Layer、Order in Layer来排序
+如果没持有该组件，GameObject的默认Sorting Layer和Order in Layer都是0
+**注意！Sorting Group设置优先级是越上级越优先，如果父节点和子节点同时持有Sorting Group组件，那么子节点本身的Sorting Group组件是不会生效的！子节点的Sorting Layer和Order in Layer是父节点Sorting Group设置的值。这个对Partical System（粒子特效）也是同样的，父节点如果有Sorting Group组件，那么它的值也会将Partical System中Renderer里的Sorting Layer、Order in Layer值覆盖**
+
 
 ## Render（渲染器）
 ### 作用
