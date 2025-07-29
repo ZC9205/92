@@ -111,7 +111,11 @@ StopCoroutine(enumerator);
 ```
 #### yield
 涉及到协程，一般都会用到yield return命令
-可以停止该协程这帧代码的执行，并在下一个时间段继续执行剩下的代码
+yield return null 
+停止该协程这帧的执行，并在下一帧继续执行剩下的代码
+yield return xxx(inherite emmurator) 
+停止该协程这帧的执行，接着每帧执行xxx的MoveNext逻辑，直到xxx执行结束，才会继续执行该协程剩下的代码
+
 ```c#
 IEnumerator CreateObjects()
     {
