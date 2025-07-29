@@ -30,6 +30,9 @@
         - [Tonemapping](#tonemapping)
   - [渲染顺序](#渲染顺序)
   - [渲染优化](#渲染优化)
+    - [Set Pass Call](#set-pass-call)
+    - [Batch](#batch)
+    - [DrawCall](#drawcall)
     - [批处理](#批处理)
       - [UGUI合批（UGUI batching）](#ugui合批ugui-batching)
         - [定义](#定义)
@@ -49,6 +52,7 @@
         - [优点](#优点-1)
         - [缺点](#缺点-1)
         - [合批限制](#合批限制-2)
+        - [注意](#注意)
         - [开启方式](#开启方式-1)
       - [GPU Instancing](#gpu-instancing)
         - [定义](#定义-3)
@@ -61,6 +65,7 @@
         - [优点](#优点-3)
         - [缺点](#缺点-3)
         - [合批限制](#合批限制-4)
+        - [注意](#注意-1)
         - [开启方式](#开启方式-3)
   - [GPU](#gpu)
     - [Constant Buffer（CBUFFER 常量缓冲区）](#constant-buffercbuffer-常量缓冲区)
@@ -185,6 +190,19 @@ Sorting Layer和Order in Layer可以通过组件Sorting Group进行设置
 UGUI元素（Canvas下的可视元素），每个Canvas会对自己内部的UGUI元素进行排序并合并批次，之后再将合并后的一个批次作为一个可视物体，并和其他物体一起（如3D模型）参与到上面的渲染排序
 
 ## 渲染优化
+
+### Set Pass Call
+渲染时切换渲染状态的次数，也可以理解为每帧执行渲染的Shader Pass次数
+Shader里的每段Pass都代表了一次完整的渲染过程（从顶点着色到颜色输出）
+设置渲染状态是在CPU上进行的，会消耗较多的时间，因此减少Set Pass Call是优化性能的重要指标
+
+### Batch
+将满足合批条件物体的数据合并后每帧提交渲染的次数。需要注意的是有些合批方式并不会减少该次数，比如SRP Batch执行时虽然会减少渲染状态切换（Set Pass Call）及绑定物体数据的时间，但依然是每个物体单独渲染，因此不会减少Batch次数
+Batch是性能优化的重要指标，理论上Batch越少性能越好（数据合并后一次性提交会比每条数据单独提交快很多），一个Batch至少包含了一条DrawCall
+
+### DrawCall
+CPU让GPU执行渲染的命令。实际只是一条包含极少数据的指令，并没有什么消耗
+
 ### 批处理
 [关于静态批处理/动态批处理/GPU Instancing /SRP Batcher的详细剖析](https://zhuanlan.zhihu.com/p/98642798)
 批处理，是一种在CPU应用阶段，将**相同渲染状态**的物体合并提交的一种优化手段，主要减少了CPU频繁切换渲染状态所造成的消耗。是一种当CPU负载高于GPU时可以使用的优化方式
@@ -246,6 +264,8 @@ Canvas节点下UGUI的Layer实际上是跟随Canvas自身的Layer，因此设置
 ##### 合批限制
 必须使用相同材质
 合批物体顶点不能超过300个（如果使用了更多着色器属性如UV0,UV1 顶点数量不能超过180个）
+##### 注意
+对于Shader变体（相同Shader不同材质），动态合批是无法进行的，会打断合批并重新设置渲染状态
 ##### 开启方式
 内置渲染管线
 ![alt text](assets/unity_render_pipeline/image-11.png)
@@ -302,7 +322,7 @@ Material面板属性开启
 ![alt text](assets/unity_render_pipeline/image-24.png)
 
 ##### 优点
-可以合批不同材质，合批条件较宽
+可以合批相同shader变体的不同材质，合批条件较宽
 使用专用代码上传物体数据和材质属性，效率更高
 上传的材质属性会持久保存在GPU的常量缓冲中，因此渲染同材质的物体时，不需要再次上传数据
 
@@ -313,6 +333,9 @@ Material面板属性开启
 共享相同的着色器变体
 不能是粒子
 不能使用MaterialPropertyBlock来修改材质属性
+
+##### 注意
+SRP Batch合批方式并不像其他合批方式一样会合并满足合批条件的物体网格，实际渲染时还是依次绑定每个物体属性并单独渲染，因此并不会减少Batch和DrawCall
 
 ##### 开启方式
 URP
