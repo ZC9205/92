@@ -32,6 +32,7 @@
     - [Box(区块)](#box区块)
     - [Label(文本标签)](#label文本标签)
     - [Button(按钮)](#button按钮)
+    - [Foldout(折叠按钮)](#foldout折叠按钮)
     - [Texture(图片)](#texture图片)
     - [Toggle(单选框)](#toggle单选框)
     - [Toggle Group(多选组)](#toggle-group多选组)
@@ -475,6 +476,16 @@ m_Button = GUILayout.Button("Button 3", GUILayout.Width(100), GUILayout.Height(3
 m_Button = EditorGUILayout.DropdownButton(new GUIContent("Button 4"), FocusType.Passive, GUILayout.Width(100), GUILayout.Height(30));
 ```
 ![alt text](assets/unity_editor/image-17.png)
+
+### Foldout(折叠按钮)
+```C
+isFold = EditorGUILayout.Foldout(isFold, "Foldout Button");
+if (isFold)
+{
+    EditorGUILayout.TextArea("1111111111111");
+}
+```
+![alt text](assets/unity_editor/image-62.png)
 
 ### Texture(图片)
 ```C
