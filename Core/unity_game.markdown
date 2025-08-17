@@ -17,6 +17,11 @@
       - [管理机制](#管理机制-3)
       - [注意事项](#注意事项-2)
     - [Code Heap（代码堆）](#code-heap代码堆)
+  - [Async（异步）](#async异步)
+    - [修饰符](#修饰符)
+      - [async](#async)
+      - [await](#await)
+    - [完整事例](#完整事例)
   - [Coroutine（协程）](#coroutine协程)
     - [说明](#说明)
     - [使用](#使用)
@@ -89,6 +94,58 @@ GPU纹理内存堆
 
 ### Code Heap（代码堆）
 存储的是编译后对应平台机器码，一般不需要开发者关心
+
+## Async（异步）
+
+### 修饰符
+
+#### async
+使用async可以标明该方法属于异步方法，返回值只能是void（无返回值）、Task（无返回值 但可通过Task获取任务进度等）、Task\<T>（有返回值，T是返回值类型如int、string等等）三种
+```c#
+private async void ExampleAsync(){}
+
+private async Task ExampleAsync(){}
+
+private async Task<int> ExampleAsync(){}
+```
+
+#### await
+调用异步方法前加上await，会等待该异步方法执行结束后才继续执行await下面的代码
+**注意 await修饰符只能使用在async方法内部**
+```c#
+private async void RunAsync()
+{
+    //await 在等待ExampleAsync执行完毕前，不继续执行余下代码
+    int result = await ExampleAsync();
+    //方法执行完毕后获取异步结果
+    Debug.Log(result);
+}
+```
+
+### 完整事例
+```c#
+// Start is called before the first frame update
+void Start()
+{
+    RunAsync();
+}
+
+private async void RunAsync()
+{
+    //执行并获取异步方法的Task 可以查询进度等情况
+    Task async = ExampleAsync();
+    //await 在等待ExampleAsync执行完毕前，不继续执行余下代码
+    int result = await ExampleAsync();
+    //方法执行完毕后获取异步结果
+    Debug.Log(result);
+}
+
+private async Task<int> ExampleAsync()
+{
+    //await xxx() 异步调用 如网络请求、异步加载等等
+    return 1;
+}
+```
 
 ## Coroutine（协程）
 
